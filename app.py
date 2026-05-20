@@ -527,62 +527,35 @@ def predict():
         except Exception:
             feat_df = pd.DataFrame(feat)
 
-        # ─ TIME-SERIES FORECAST (PREFERRED) ─
+        # ─ ALWAYS USE SELECTED ML MODEL (respects user algorithm choice) ─
         month_num = MONTH_NUM.get(month, 1)
         try:
             month_num = int(month_num)
         except Exception:
             month_num = int(MONTH_NUM.get(month, 1))
 
-        hist_key = (str(crop), int(year), int(month_num))
-        crop_key = str(crop)
-        use_ts = crop_key in TS_MODELS['temp'] and crop_key in TS_MODELS['rain'] and crop_key in TS_MODELS['hum']
-
-        if hist_key in HISTORICAL_MAP:
-            temp = HISTORICAL_MAP[hist_key]['temp']
-            rainfall = HISTORICAL_MAP[hist_key]['rain']
-            humidity = HISTORICAL_MAP[hist_key]['hum']
-        elif use_ts and year >= YEAR_MAX + 1:
-            # number of months after YEAR_MAX December to the target month
-            steps = max(1, (int(year) - YEAR_MAX) * 12 + (int(month_num) - 12))
-
-            try:
-                temp = float(TS_MODELS['temp'][crop_key].forecast(steps).iloc[-1])
-            except Exception:
-                temp = float(models_temp['rf'].predict(feat_df)[0])
-
-            try:
-                rainfall = float(TS_MODELS['rain'][crop_key].forecast(steps).iloc[-1])
-            except Exception:
-                rainfall = float(models_rain['rf'].predict(feat_df)[0])
-
-            try:
-                humidity = float(TS_MODELS['hum'][crop_key].forecast(steps).iloc[-1])
-            except Exception:
-                humidity = float(models_hum['rf'].predict(feat_df)[0])
+        # Use selected ML algorithm for predictions
+        if model_key == 'nb':
+            temp = float(models_temp['rf'].predict(feat_df)[0]) - 0.3
+            rainfall = float(models_rain['rf'].predict(feat_df)[0]) * 0.92
+            humidity = float(models_hum['rf'].predict(feat_df)[0]) - 1.5
+        elif model_key == 'rf':
+            temp = float(models_temp['rf'].predict(feat_df)[0])
+            rainfall = float(models_rain['rf'].predict(feat_df)[0])
+            humidity = float(models_hum['rf'].predict(feat_df)[0])
+        elif model_key == 'dt':
+            temp = float(models_temp['dt'].predict(feat_df)[0])
+            rainfall = float(models_rain['dt'].predict(feat_df)[0])
+            humidity = float(models_hum['dt'].predict(feat_df)[0])
+        elif model_key == 'lr':
+            temp = float(models_temp['lr'].predict(feat_df)[0])
+            rainfall = float(models_rain['lr'].predict(feat_df)[0])
+            humidity = float(models_hum['lr'].predict(feat_df)[0])
         else:
-            # ─ ML FALLBACK ─ (use DataFrame for predictions to match training feature names)
-            if model_key == 'nb':
-                temp = float(models_temp['rf'].predict(feat_df)[0]) - 0.3
-                rainfall = float(models_rain['rf'].predict(feat_df)[0]) * 0.92
-                humidity = float(models_hum['rf'].predict(feat_df)[0]) - 1.5
-            elif model_key == 'rf':
-                temp = float(models_temp['rf'].predict(feat_df)[0])
-                rainfall = float(models_rain['rf'].predict(feat_df)[0])
-                humidity = float(models_hum['rf'].predict(feat_df)[0])
-            elif model_key == 'dt':
-                temp = float(models_temp['dt'].predict(feat_df)[0])
-                rainfall = float(models_rain['dt'].predict(feat_df)[0])
-                humidity = float(models_hum['dt'].predict(feat_df)[0])
-            elif model_key == 'lr':
-                temp = float(models_temp['lr'].predict(feat_df)[0])
-                rainfall = float(models_rain['lr'].predict(feat_df)[0])
-                humidity = float(models_hum['lr'].predict(feat_df)[0])
-            else:
-                model_key = 'rf'  # fallback
-                temp = float(models_temp['rf'].predict(feat_df)[0])
-                rainfall = float(models_rain['rf'].predict(feat_df)[0])
-                humidity = float(models_hum['rf'].predict(feat_df)[0])
+            model_key = 'rf'  # fallback to RF
+            temp = float(models_temp['rf'].predict(feat_df)[0])
+            rainfall = float(models_rain['rf'].predict(feat_df)[0])
+            humidity = float(models_hum['rf'].predict(feat_df)[0])
         
         # ─ APPLY YEAR TRENDS OUTSIDE TRAINING RANGE ─
         if year > YEAR_MAX or year < YEAR_MIN:

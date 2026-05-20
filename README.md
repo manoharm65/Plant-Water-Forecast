@@ -1,5 +1,32 @@
 # 🌱 Plant Water Requirement Prediction Dashboard
 
+## Quick start — clone/unzip and run
+
+If you downloaded the project as a ZIP, unzip it and then run these commands from the project root. If you cloned from git, replace the unzip step with `git clone <repo-url>`.
+
+Windows (PowerShell):
+
+```powershell
+cd path\to\unzipped\AI_DASHBOARD
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py
+```
+
+Linux / macOS (bash):
+
+```bash
+cd path/to/unzipped/AI_DASHBOARD
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+The server will start on http://localhost:5000. Ensure the `data/` folder contains `Model dataset.xlsx` and `ph_values.xlsx` before running.
+
+
 A full-stack web application that predicts agricultural water requirements using machine learning models trained on historical climate and crop data (1981–2023) and forecasts for 2024–2050.
 
 ---

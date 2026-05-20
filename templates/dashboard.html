@@ -872,20 +872,22 @@
         // HARDCODED CROP & SOIL DATA
         // ═══════════════════════════════════════════════════════════════════════
 
-        const CROP_KC = {
+        let CROP_KC = {
+            'Onion': 0.83,
             'Paddy': 1.10,
-            'Sugarcane': 1.25,
+            'Groundnut': 0.68,
+            'Jowar (Sorghum)': 0.78,
+            'Jowar': 0.78,
+            'Sugarcane': 0.90,
+            'Finger Millet (Ragi)': 0.72,
+            'Finger Millet (Raagi)': 0.72,
             'Tomato': 0.85,
-            'Groundnut': 0.75,
-            'Onion': 0.80,
-            'Cotton': 0.85,
-            'Sunflower': 0.90,
-            'Jowar': 0.80,
-            'Finger Millet (Raagi)': 0.85,
-            'Maize': 0.85
+            'Sunflower': 0.60,
+            'Cotton': 0.65,
+            'Maize': 0.65
         };
 
-        const IRRI_INTERVALS = {
+        let IRRI_INTERVALS = {
             'Paddy': { Loamy: 6, Clayey: 7 },
             'Sugarcane': { Loamy: 10, Clayey: 12 },
             'Tomato': { Loamy: 5, Clayey: 6 },
@@ -894,11 +896,13 @@
             'Cotton': { Loamy: 8, Clayey: 10 },
             'Sunflower': { Loamy: 7, Clayey: 8 },
             'Jowar': { Loamy: 8, Clayey: 10 },
+            'Jowar (Sorghum)': { Loamy: 8, Clayey: 10 },
             'Finger Millet (Raagi)': { Loamy: 7, Clayey: 8 },
+            'Finger Millet (Ragi)': { Loamy: 7, Clayey: 8 },
             'Maize': { Loamy: 6, Clayey: 7 }
         };
 
-        const NET_IRR = {
+        let NET_IRR = {
             'Paddy': { Loamy: 60, Clayey: 70 },
             'Sugarcane': { Loamy: 80, Clayey: 90 },
             'Tomato': { Loamy: 40, Clayey: 50 },
@@ -907,33 +911,37 @@
             'Cotton': { Loamy: 55, Clayey: 65 },
             'Sunflower': { Loamy: 50, Clayey: 60 },
             'Jowar': { Loamy: 40, Clayey: 50 },
+            'Jowar (Sorghum)': { Loamy: 40, Clayey: 50 },
             'Finger Millet (Raagi)': { Loamy: 40, Clayey: 50 },
+            'Finger Millet (Ragi)': { Loamy: 40, Clayey: 50 },
             'Maize': { Loamy: 45, Clayey: 55 }
         };
 
-        const PH_VALUES = {
+        let PH_VALUES = {
             JAN: 7.94, FEB: 7.36, MAR: 8.43, APR: 8.44, MAY: 8.98,
             JUN: 8.80, JUL: 9.05, AUG: 8.83, SEP: 8.28, OCT: 8.26, NOV: 7.75, DEC: 7.88
         };
 
-        const MONTH_SEASON = {
+        let MONTH_SEASON = {
             'JAN': 'Rabi', 'FEB': 'Rabi', 'MAR': 'Zaid', 'APR': 'Zaid', 'MAY': 'Zaid',
-            'JUN': 'Kharif', 'JUL': 'Kharif', 'AUG': 'Kharif', 'SEP': 'Kharif', 'OCT': 'Kharif',
+            'JUN': 'Kharif', 'JUL': 'Kharif', 'AUG': 'Kharif', 'SEP': 'Kharif', 'OCT': 'Rabi',
             'NOV': 'Rabi', 'DEC': 'Rabi'
         };
 
         // These will be loaded from the backend
         let DISTRICT_SOIL = {
             'Mandya': 'Red Sandy Loams (Loamy)',
-            'Kolar': 'Red Clay Loam (Clayey)',
-            'Tumkur': 'Red Clay Loam (Clayey)',
-            'Chikkaballapura': 'Red Clay Loam (Clayey)',
-            'Bengaluru Rural': 'Red Sandy Loams (Loamy)',
-            'Ramanagara': 'Red Sandy Loams (Loamy)'
+            'Ramanagara': 'Red Sandy Soil (Sandy)',
+            'Kolar': 'Red, Clay Loam and Laterite (Loamy)',
+            'Chikkaballapura': 'Red, Clay Loam and Laterite (Loamy)',
+            'Bengaluru Rural': 'Red Sandy Loam (Loamy)',
+            'Tumakuru': 'Red Clay (Clayey)'
         };  // Fallback (will be overridden by server data)
 
         let SERVER_CROP_DATA = {};  // Will be populated from server
         let SERVER_DISTRICT_SOIL = {};  // Will be populated from server
+        let SERVER_PH_MAP = {};  // Will be populated from server
+        let SERVER_MONTH_SEASON = {};  // Will be populated from server
 
         // ═══════════════════════════════════════════════════════════════════════
         // LOAD DATA-DRIVEN CONFIGURATIONS FROM SERVER
@@ -948,6 +956,7 @@
                 }
                 
                 const config = await response.json();
+                const cropSelect = document.getElementById('sel-crop');
                 
                 // Update mappings from server (actual data)
                 if (config.district_soil_map && Object.keys(config.district_soil_map).length > 0) {
@@ -959,6 +968,22 @@
                 if (config.crop_data_map && Object.keys(config.crop_data_map).length > 0) {
                     SERVER_CROP_DATA = config.crop_data_map;
                     console.log('✓ Crop data loaded from data:', config.crop_data_map);
+                }
+
+                if (config.crop_list && cropSelect) {
+                    cropSelect.innerHTML = config.crop_list
+                        .map(crop => `<option value="${crop}">${crop}</option>`)
+                        .join('');
+                }
+
+                if (config.ph_map && Object.keys(config.ph_map).length > 0) {
+                    SERVER_PH_MAP = config.ph_map;
+                    PH_VALUES = config.ph_map;
+                }
+
+                if (config.month_season_map && Object.keys(config.month_season_map).length > 0) {
+                    SERVER_MONTH_SEASON = config.month_season_map;
+                    MONTH_SEASON = config.month_season_map;
                 }
                 
             } catch (error) {
@@ -984,6 +1009,7 @@
         document.getElementById('sel-month').addEventListener('change', function() {
             const season = MONTH_SEASON[this.value] || 'Kharif';
             document.getElementById('sel-season').value = season;
+            runPrediction();
         });
 
         document.getElementById('sel-district').addEventListener('change', function() {
@@ -993,6 +1019,7 @@
             if (soilDisplay) {
                 soilDisplay.value = soil;
             }
+            runPrediction();
         });
 
         document.getElementById('sel-year').addEventListener('change', function() {
@@ -1002,6 +1029,15 @@
             } else {
                 document.getElementById('year-warning').style.display = 'none';
             }
+            runPrediction();
+        });
+
+        document.getElementById('sel-crop').addEventListener('change', function() {
+            runPrediction();
+        });
+
+        document.getElementById('sel-model').addEventListener('change', function() {
+            runPrediction();
         });
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -1010,6 +1046,7 @@
 
         function getSoilCategory() {
             const soil = document.getElementById('sel-soil').value;
+            if (soil.includes('Sandy')) return 'Sandy';
             if (soil.includes('Loamy')) return 'Loamy';
             if (soil.includes('Clayey')) return 'Clayey';
             return 'Loamy';
@@ -1020,13 +1057,10 @@
         // ═══════════════════════════════════════════════════════════════════════
 
         function runPredictionManual() {
-            runPrediction(true);
+            runPrediction();
         }
 
-        async function runPrediction(manual = false) {
-            if (!manual) {
-                return;
-            }
+        async function runPrediction() {
             const year = parseInt(document.getElementById('sel-year').value);
 
             // Validate year
@@ -1119,10 +1153,17 @@
             const modelName = payload.model;
 
             // Get crop parameters
-            const kc = CROP_KC[crop] || 0.85;
             const soilCategory = getSoilCategory();
-            const interval = IRRI_INTERVALS[crop]?.[soilCategory] || 7;
-            const netIrr = NET_IRR[crop]?.[soilCategory] || 50;
+            const cropInfo = SERVER_CROP_DATA[crop] || {};
+            const kc = CROP_KC[crop] ?? cropInfo.kc ?? 0.85;
+            const interval = cropInfo.irrigation
+                ?? IRRI_INTERVALS[crop]?.[soilCategory]
+                ?? IRRI_INTERVALS[crop]?.Loamy
+                ?? 7;
+            const netIrr = cropInfo.net_irrigation
+                ?? NET_IRR[crop]?.[soilCategory]
+                ?? NET_IRR[crop]?.Loamy
+                ?? 50;
 
             // Calculate ETc
             const etcValue = calculateETc(temp, ph, kc);
@@ -1384,6 +1425,8 @@
             document.getElementById('sel-month').dispatchEvent(new Event('change'));
             // Set initial district soil
             document.getElementById('sel-district').dispatchEvent(new Event('change'));
+            // Run initial prediction with defaults
+            runPrediction();
         });
     </script>
 </body>
